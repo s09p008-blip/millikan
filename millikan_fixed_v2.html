@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ミリカンの油滴実験（速度法：v₁ と v₂ で q を求める）</title>
+  <style>
+    :root{
+      --bg:#0f172a; --panel:#111827; --panel-2:#0b1220; --ink:#e5e7eb; --muted:#9ca3af;
+      --accent:#38bdf8; --good:#34d399; --bad:#f87171; --drag:#22d3ee; --grav:#fbbf24; --elec:#a78bfa; --vel:#60a5fa;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),#020617);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:var(--accent)}
+    .wrap{display:grid;grid-template-columns:360px 1fr;gap:16px;max-width:1200px;margin:0 auto;padding:16px}
+    @media (max-width: 1000px){.wrap{grid-template-columns:1fr}}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid rgba(148,163,184,.2);border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,.55)}
+    .header{padding:14px 16px;border-bottom:1px solid rgba(148,163,184,.12);display:flex;align-items:center;gap:10px}
+    .header h1{font-size:18px;margin:0}
+    .body{padding:12px 14px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .row + .row{margin-top:10px}
+    label{font-size:13px;color:var(--muted)}
+    input[type=range]{width:220px}
+    button, input, select { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    @media (max-width: 640px){
+      .wrap{padding:8px}
+      .chamber{height:360px}
+      input[type=range]{width:100%}
+      button{min-height:44px;padding:12px 14px;font-size:16px}
+    }
+    button{background:linear-gradient(180deg,#1f2937,#0b1220);border:1px solid rgba(148,163,184,.3);color:var(--ink);padding:8px 10px;border-radius:12px;cursor:pointer;transition:.15s;user-select:none}
+    button:hover{transform:translateY(-1px);box-shadow:0 8px 16px rgba(2,6,23,.5)}
+    button:active{transform:translateY(0)}
+    .good{border-color:rgba(16,185,129,.6)}
+    .bad{border-color:rgba(248,113,113,.6)}
+    .accent { border-color: rgba(56, 189, 248, 0.6); color: var(--accent); }
+    .muted{color:var(--muted)}
+    .value{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    details{border-top:1px dashed rgba(148,163,184,.25);margin-top:10px;padding-top:8px}
+    details>summary{cursor:pointer;color:var(--muted)}
+
+    /* Chamber スタイル (変更なし) */
+    .chamber{position:relative;height:420px;border-radius:14px;overflow:hidden;background:radial-gradient(1200px 420px at 50% 100%, rgba(56,189,248,.06), transparent 65%),
+      radial-gradient(1000px 320px at 50% 0%, rgba(167,139,250,.06), transparent 65%),
+      linear-gradient(180deg,#0b1220,#0b1220)}
+    .plate{position:absolute;left:12px;right:12px;height:10px;border-radius:8px;background:linear-gradient(0deg,#0a0f1a,#1f2937);box-shadow:inset 0 -2px 6px rgba(0,0,0,.5), inset 0 2px 6px rgba(255,255,255,.06)}
+    .plate.top{top:18px}
+    .plate.bot{bottom:18px}
+    .aperture{position:absolute;top:23px;left:50%;transform:translateX(-50%);width:26px;height:26px;border-radius:50%;
+      background:radial-gradient(circle at 50% 50%, rgba(15,23,42,1) 35%, rgba(15,23,42,.4) 60%, rgba(255,255,255,.08) 62%, rgba(0,0,0,.6) 64%);
+      box-shadow:0 4px 10px rgba(0,0,0,.6)}
+    .spray{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:4px;height:14px;background:linear-gradient(180deg,#94a3b8,#cbd5e1);border-radius:2px}
+    .tick{position:absolute;left:50%;transform:translateX(-50%);width:2px;height:40px;background:rgba(148,163,184,.35)}
+    .tick:after{content:"1 mm";position:absolute;top:44px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted)}
+    .drop{position:absolute;left:50%;width:16px;height:16px;border-radius:50%;
+      background:radial-gradient(circle at 35% 30%, #fef08a 10%, #fde047 40%, #f59e0b 70%, #92400e 95%);
+      box-shadow:0 0 18px rgba(250,204,21,.35); will-change: transform; z-index:5}
+    .drop.plus::after{content:'+';position:absolute;left:50%;top:50%;transform:translate(-50%,-54%);font-weight:800;font-size:12px;color:#fef9c3;text-shadow:0 0 4px rgba(2,6,23,.9),0 0 8px rgba(255,255,255,.25)}
+    .drop.minus::after{content:'−';position:absolute;left:50%;top:50%;transform:translate(-50%,-54%);font-weight:880;font-size:14px;color:#fde68a;text-shadow:0 0 4px rgba(2,6,23,.9),0 0 8px rgba(255,255,255,.25)}
+    .fieldArrows{position:absolute;top:60px;bottom:60px;left:16px;right:16px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;pointer-events:none}
+    .arrow{width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;align-self:flex-start}
+    .arrow.up{border-bottom:26px solid rgba(56,189,248,.95)}
+    .arrow.down{border-top:26px solid rgba(56,189,248,.95)}
+    .legend{position:absolute;right:10px;top:10px;font-size:12px;color:var(--muted)}
+    .vec{position:absolute;height:4px;border-radius:2px;transform-origin:0 50%;filter:drop-shadow(0 0 6px rgba(0,0,0,.6));pointer-events:none}
+    .vec::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);border-top:6px solid transparent;border-bottom:6px solid transparent}
+    .vec.g{background:var(--grav)} .vec.g::after{border-left:10px solid var(--grav)}
+    .vec.d{background:var(--drag)} .vec.d::after{border-left:10px solid var(--drag)}
+    .vec.e{background:var(--elec)} .vec.e::after{border-left:10px solid var(--elec)}
+    .vec.v{background:var(--vel)} .vec.v::after{border-left:10px solid var(--vel)}
+    .lab{position:absolute;font-size:12px;color:#e5e7eb;opacity:.9;text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
+
+    /* Table スタイル (変更なし) */
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:6px 8px;border-bottom:1px solid rgba(148,163,184,.12)}
+    th{color:var(--muted);font-weight:600;text-align:right}
+    td{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;text-align:right}
+    td.left, th.left{text-align:left}
+    .scroll{max-height:210px;overflow:auto;border:1px solid rgba(148,163,184,.15);border-radius:10px}
+    .notice{font-size:13px;color:#cbd5e1;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.35);padding:10px 12px;border-radius:12px}
+  </style>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header"><h1>操作</h1></div>
+      <div class="body">
+
+        <div class="row">
+          <button id="btn_new" style="flex-grow:1">① 油滴を追加</button>
+          <button id="btn_pause">⏯ 一時停止</button>
+        </div>
+        
+        <div class="row">
+          <button id="btn_v0" style="flex-grow:1">② v₁ 計測（E=0）</button>
+        </div>
+
+        <div class="row">
+          <button id="btn_toggleE" class="accent" style="flex-grow:1">③ 電場を ON にする</button>
+        </div>
+
+        <div class="row" style="margin-top:6px">
+          <label>④ 極板電圧 V [V]</label>
+          <span class="value" id="val_V">300</span>
+        </div>
+        <div class="row">
+          <input id="slider_V" type="range" min="-600" max="600" value="300" style="width:100%" />
+        </div>
+
+        <div class="row">
+          <button id="btn_vE" style="flex-grow:1">⑤ v₂ 計測（E≠0）</button>
+        </div>
+
+        <div class="row">
+          <button class="good" id="btn_record" style="flex-grow:1">⑥ 記録</button>
+        </div>
+        
+        <div class="row" style="margin-top:6px">
+          <label>ヒストグラムのビン数</label>
+          <input id="in_bins" type="range" min="5" max="24" value="10" />
+          <span class="value" id="val_bins">10</span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="bad" id="btn_reset">リセット</button>
+          <button id="btn_csv">CSV</button>
+        </div>
+        <details>
+          <summary>詳細設定（自動生成・補正ON/OFF・参考式）</summary>
+          <div class="row" style="margin-top:8px">
+            <button id="btn_autogen">サンプルを自動生成</button>
+            <input id="in_N" type="number" value="12" min="3" max="60" style="width:90px"/>
+          </div>
+          <div class="row">
+            <label>カニングハム補正</label>
+            <select id="in_corr"><option value="on" selected>ON</option><option value="off">OFF</option></select>
+            <button id="btn_balance_demo">理想 V（参考）</button>
+          </div>
+          <div class="row muted" style="font-size:13px">式：<code>mg = kv₁</code>，<code>qE = mg + kv₂</code> → <code>q = (6π η r / E)(v₂ + v₁)</code>（補正ON時は <code>η → η/C</code>）。</div>
+        </details>
+        
+        <div class="row" style="margin-top:8px"><span class="notice"><b>観察の流れ</b>：①油滴が落下（v₁） ②E=0で <b>v₁</b> を計測 ③<b>電場をON</b>にし、④電圧Vを設定、⑤終端速度 <b>v₂</b> を計測 ⑥<b>記録</b>。</span></div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="header"><h1>観察チャンバー と データ</h1></div>
+      <div class="body">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px">
+          <div class="muted">中央の2本線の間隔 = <b>1 mm</b></div>
+          <div class="muted">E = <span class="value" id="val_E">0</span> [V/m] / 状態: <span class="value" id="val_Estate">OFF</span></div>
+        </div>
+        <div class="chamber" id="chamber">
+          <div class="plate top"></div>
+          <div class="aperture" title="上板の穴"></div>
+          <div class="spray" title="噴霧ノズル"></div>
+          <div class="plate bot"></div>
+          <div class="tick" id="tick" style="top:calc(50% - 20px)"></div>
+          <div class="fieldArrows" id="fieldArrows"></div>
+          <div class="legend">y軸↑（上方向）</div>
+          <div class="drop plus" id="drop" style="transform:translate3d(-50%,56px,0);display:none"></div>
+          <div class="vec g" id="vec_g" style="display:none"></div>
+          <div class="vec d" id="vec_d" style="display:none"></div>
+          <div class="vec e" id="vec_e" style="display:none"></div>
+          <div class="vec v" id="vec_v" style="display:none"></div>
+          <div class="lab" id="lab_g" style="display:none">Mg</div>
+          <div class="lab" id="lab_d" style="display:none">kv</div>
+          <div class="lab" id="lab_e" style="display:none">qE</div>
+          <div class="lab" id="lab_v" style="display:none">v</div>
+        </div>
+        <div class="row" style="justify-content:space-between;margin-top:8px">
+          <div class="muted">現在の速度 v = <span class="value" id="val_v">0</span> mm/s</div>
+        </div>
+
+        <div class="card" style="padding:12px;margin-top:12px">
+          <canvas id="chart_hist" height="200"></canvas>
+          <div class="row" style="margin-top:6px"><span class="muted">● q（単位: C）のヒストグラム。山が等間隔に現れるか観察し、最小単位を議論する。</span></div>
+        </div>
+
+        <div class="card" style="padding:12px;margin-top:12px">
+          <table>
+            <thead>
+              <tr><th class="left">#</th><th>v₁ [mm/s]</th><th>v₂ [mm/s]</th><th>r<sub>c</sub> [μm]</th><th>q [10⁻¹⁹ C]</th></tr>
+            </thead>
+          </table>
+          <div class="scroll"><table id="tbody"></table></div>
+          <div style="margin-top:8px" class="muted">サンプル数: <span class="value" id="out_N">0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====== Helpers ======
+    const $ = function(q){return document.querySelector(q)};
+    const fmt = function(x, n){ if(n===void 0) n=3; return Number.isFinite(x)? x.toFixed(n):'–'; };
+    function fmtSci(v, n) { 
+      if (n===void 0) n=2;
+      if (!isFinite(v)) return '–';
+      const parts = v.toExponential(n).split('e');
+      return parts[0] + '×10^' + parts[1]; 
+    }
+    function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+    function toast(msg, bad){ if(bad===void 0) bad=false; var el = document.createElement('div'); el.textContent = msg; el.style.position='fixed'; el.style.left='50%'; el.style.top='16px'; el.style.transform='translateX(-50%)'; el.style.padding='8px 12px'; el.style.borderRadius='12px'; el.style.background= bad? 'rgba(248,113,113,.2)':'rgba(16,185,129,.15)'; el.style.border = '1px solid ' + (bad?'rgba(248,113,113,.5)':'rgba(16,185,129,.5)'); el.style.color='#e5e7eb'; el.style.backdropFilter='blur(6px)'; el.style.zIndex=1000; document.body.appendChild(el); setTimeout(function(){el.remove()}, 1400); }
+
+    (function ensureConsoleAssert(){ if (typeof window.console === 'undefined') window.console = {}; if (typeof console.error !== 'function') console.error = function(){}; if (typeof console.assert !== 'function') { console.assert = function(condition){ if(!condition){ try{ console.error('Assertion failed'); }catch(_e){} throw new Error('Assertion failed'); } }; } })();
+
+    // ====== Global ======
+    const state = { g:9.81, rho_o:871, rho_a:1.184, eta:1.88e-5, d_mm:5.0, p_hPa:1013, B_mu_hPa:82, corrOn:true, V:300, Eon:false, pol:-1, paused:false, drop:null, meas:{ v0_mm_s:null, vE_mm_s:null }, records:[], chartHist:null, bins:10 };
+
+    // 幾何 (変更なし)
+    const geom = { height:0, width:0, innerTop:30, innerBot:390 };
+    function measureGeometry(){ var cr = $('#chamber').getBoundingClientRect(); geom.height = cr.height; geom.width = cr.width; geom.innerTop = 30; geom.innerBot = cr.height - 30; }
+    window.addEventListener('resize', measureGeometry);
+
+    function refreshFromUI(){ state.V = parseFloat($('#slider_V').value); $('#val_V').textContent = state.V.toFixed(0); var d_m = state.d_mm/1000; var E = (d_m!==0)? state.V/d_m : 0; $('#val_E').textContent = Number.isFinite(E)? E.toFixed(0) : '–'; state.bins = parseInt($('#in_bins').value,10); $('#val_bins').textContent = state.bins; }
+    function setV(V){ var clamped = clamp(V, parseFloat($('#slider_V').min), parseFloat($('#slider_V').max)); $('#slider_V').value = clamped; refreshFromUI(); drawFieldArrows(); }
+
+    function C_of_r(r_m){ if(!state.corrOn) return 1; var r_um=r_m*1e6; return 1 + (state.B_mu_hPa)/(state.p_hPa * r_um); }
+
+    // ====== Droplet ======
+    function newDroplet(){ 
+      var r_um = 0.6 + Math.random()*0.2; // 0.6 ~ 0.8
+      var r = r_um*1e-6; 
+      var n = 1 + Math.floor(Math.random()*7); 
+      var q_true = state.pol * n * 1.602176634e-19; 
+      var dR = Math.max(0, state.rho_o - state.rho_a); var vol = 4*Math.PI*r*r*r/3; var m = state.rho_o * vol; var C = C_of_r(r); var D = state.corrOn? (6*Math.PI*state.eta*r)/C : 6*Math.PI*state.eta*r; var y_center = 56 + 8; return {r:r, r_um:r_um, q_true:q_true, n_true:n, y:y_center, v:0, vol:vol, m:m, D:D, C:C, dR:dR, radius_px:8}; 
+    }
+
+    function setDropAppearance(){ var el=$('#drop'); if(!state.drop){ el.style.display='none'; return; } var n = Math.abs(state.drop.n_true); var size = 12 + 3*n; state.drop.radius_px = size/2; el.style.display='block'; 
+      el.classList.add('minus'); el.classList.remove('plus'); 
+      el.style.width = size+'px'; el.style.height = size+'px'; 
+    }
+
+    function placeDrop(){ var d = state.drop; if(!d) return; var yTop = d.y - d.radius_px; $('#drop').style.transform = 'translate3d(-50%, ' + yTop + 'px, 0)'; }
+
+    function uiNewDroplet(){ state.Eon = false; drawFieldArrows(); state.drop = newDroplet(); state.meas = { v0_mm_s:null, vE_mm_s:null }; setDropAppearance(); placeDrop(); state.drop.v = 0; updateVelocityReadout(); updateVectors(); }
+
+    function drawFieldArrows(){ 
+      var box=$('#fieldArrows'); 
+      var btn = $('#btn_toggleE'); 
+      box.innerHTML=''; 
+      
+      if(!state.Eon || state.V===0){ 
+        $('#val_Estate').textContent='OFF'; 
+        btn.textContent = '③ 電場を ON にする'; 
+        btn.classList.add('accent');
+        btn.classList.remove('bad');
+        return; 
+      } 
+      
+      $('#val_Estate').textContent='ON'; 
+      btn.textContent = '③ 電場を OFF にする'; 
+      btn.classList.remove('accent');
+      btn.classList.add('bad');
+      
+      var up = state.V>0; 
+      var n=12; 
+      for(var i=0;i<n;i++){ 
+        var el=document.createElement('div'); 
+        el.className='arrow ' + (up?'up':'down'); 
+        box.appendChild(el);
+      } 
+    }
+
+    function currentE(){ var d_m=state.d_mm/1000; return (d_m!==0)? state.V/d_m : 0; }
+    
+    // 物理演算 (変更なし)
+    function stepDynamics(dt){ if(!state.drop || state.paused) return; var d = state.drop; var E = state.Eon? currentE() : 0; var mg_eff = d.dR * d.vol * state.g; var A = (d.q_true * E - mg_eff) / d.m; var B = d.D / d.m; var pxPerMm = 40; var v0 = d.v; if (B > 1e-6) { var v_inf = A / B; var expTerm = Math.exp(-B * dt); d.v = v_inf + (v0 - v_inf) * expTerm; var dy_m = v_inf*dt + (v0 - v_inf) * (1 - expTerm) / B; d.y -= (dy_m * 1000) * pxPerMm; } else { d.v = v0 + A * dt; d.y -= (d.v*1000) * dt * pxPerMm; } var topC = geom.innerTop + d.radius_px; var botC = geom.innerBot - d.radius_px; if(d.y<topC){ d.y=topC; if(d.v>0) d.v=0; } if(d.y>botC){ d.y=botC; if(d.v<0) d.v=0; } }
+
+    function currentSpeedMmPerS(){ return state.drop? state.drop.v*1000 : 0; }
+
+    // ベクトル描画 (変更なし)
+    function updateVectors(){ var vg=$('#vec_g'), vd=$('#vec_d'), ve=$('#vec_e'), vv=$('#vec_v'); var lg=$('#lab_g'), ld=$('#lab_d'), le=$('#lab_e'), lv=$('#lab_v'); if(!state.drop){ [vg,vd,ve,vv,lg,ld,le,lv].forEach(function(el){el.style.display='none'}); return; } [vg,vd,ve,vv,lg,ld,le,lv].forEach(function(el){el.style.display='block'});
+      var d=state.drop; var E=currentE(); var Fg = d.dR * d.vol * state.g; var Fd = Math.abs(d.D * d.v); var Fe = Math.abs(d.q_true * (state.Eon?E:0));
+      var KF = 3e13; var KV = 7.5; 
+      var Lg = clamp(Fg*KF, 15, 160);
+      var Ld = clamp(Fd*KF, 0, 160); 
+      var Le = clamp(Fe*KF, 0, 160);
+      var Lv = clamp(Math.abs(d.v*1000)*KV, 0, 160);
+      function placeVec(el, lab, len, angleDeg){ var cx = geom.width/2; var cy = d.y; el.style.left = '50%'; el.style.top = cy+'px'; el.style.width = Math.max(0,len)+'px'; el.style.transformOrigin = '0 50%'; el.style.transform = 'translate(0,-50%) rotate(' + angleDeg + 'deg)'; var rad = angleDeg*Math.PI/180; var lx = cx + Math.cos(rad)*len*0.55; var ly = cy - Math.sin(rad)*len*0.55 - 12; lab.style.left = lx + 'px'; lab.style.top  = ly + 'px'; }
+      placeVec(vg, lg, Lg, 90); placeVec(vd, ld, Ld, (d.v>=0? -90: 90)); var dirEUp = state.V>0; var qpos = d.q_true>0; var eAngle = (!state.Eon||E===0)? 0 : (dirEUp===qpos? -90: 90); placeVec(ve, le, Le, eAngle||90); placeVec(vv, lv, Lv, (d.v>=0? -90: 90)); }
+
+    // アニメーションループ (変更なし)
+    var last=0, acc=0; var PHYS_DT=1/240; var MAX_ACC=0.1;
+    function tick(t){ if(!last) last=t; var dt=(t-last)/1000; last=t; if(dt>0.05) dt=0.05; acc += dt; if(acc>MAX_ACC) acc=MAX_ACC;
+      while (acc >= PHYS_DT) {
+        stepDynamics(PHYS_DT);
+        acc -= PHYS_DT;
+      }
+      if(state.drop){ placeDrop(); } updateVelocityReadout(); updateVectors(); requestAnimationFrame(tick); }
+    function updateVelocityReadout(){ $('#val_v').textContent = fmt(currentSpeedMmPerS(),2); }
+
+    // 計測 (変更なし)
+    function measure_v0(){ if(!state.drop) uiNewDroplet(); state.Eon=false; drawFieldArrows(); var v0=currentSpeedMmPerS(); state.meas.v0_mm_s=v0; toast('v₁ = ' + fmt(v0,2) + ' mm/s を記録（E=0）'); }
+    function measure_vE(){ if(!state.drop) uiNewDroplet(); state.Eon=true; drawFieldArrows(); var vE=currentSpeedMmPerS(); state.meas.vE_mm_s=vE; toast('v₂ = ' + fmt(vE,2) + ' mm/s を記録（E≠0）'); }
+
+    function balance_now_demo(){ if(!state.drop){ uiNewDroplet(); } state.Eon = true; var d=state.drop; var E = (d.dR * d.vol * state.g) / Math.abs(d.q_true); var V = ( (d.q_true>0)? +E : -E ) * (state.d_mm/1000); setV(V); drawFieldArrows(); toast('参考：上昇と釣り合う V を設定'); }
+
+    // 計算 (変更なし)
+    function estimate_rc_from_v0(v0_mag){ var dR=Math.max(0, state.rho_o-state.rho_a); var r=Math.sqrt((9*state.eta*v0_mag)/(2*dR*state.g)); if(!state.corrOn) return r; for(var k=0;k<20;k++){ var C=1+(state.B_mu_hPa)/(state.p_hPa*(r*1e6)); var r2=Math.sqrt((9*state.eta*v0_mag)/(2*dR*state.g*C)); if(Math.abs(r2-r)<1e-12){r=r2;break;} r=r2;} return r; }
+    function compute_q_from_measurements(v0_mm_s, vE_mm_s, rc){ var d_m=state.d_mm/1000; if(!isFinite(d_m)||d_m===0) return NaN; var v1=Math.abs(v0_mm_s)/1000; var v2=vE_mm_s/1000; var C=C_of_r(rc); var eta_eff= state.corrOn? state.eta/C : state.eta; var q = (d_m/Math.abs(state.V||1)) * 6*Math.PI*eta_eff*rc * (v2 + v1); return q; }
+
+    // ★★★ 修正点: recordCurrent に setV(300) を追加 ★★★
+    function recordCurrent(){ 
+      var v0=state.meas.v0_mm_s; 
+      var vE=state.meas.vE_mm_s; 
+      if(v0==null){ toast('まず E=0 で v₁ を計測してください', true); return; } 
+      if(vE==null || !state.Eon){ toast('次に E を ON にして v₂ を計測してください', true); return; } 
+      var rc=estimate_rc_from_v0(Math.abs(v0)/1000); 
+      var q=compute_q_from_measurements(v0, vE, rc); 
+      var rec={ v0_mm_s:v0, vE_mm_s:vE, rc_um:rc*1e6, q_1e19:q/1e-19, q:q, rc:rc }; 
+      state.records.push(rec); 
+      renderTable(); 
+      updateHistogram(); 
+      $('#out_N').textContent = state.records.length; 
+      uiNewDroplet(); // ← この中で電場がOFFになる
+      setV(300); // ★★★ スライダーを初期値300Vに戻す ★★★
+      state.meas={v0_mm_s:null,vE_mm_s:null}; 
+      toast('記録しました（q を計算）'); 
+    }
+
+    function renderTable(){ var tb=$('#tbody'); tb.innerHTML = state.records.map(function(r,i){ return '<tr><td class="left">#'+(i+1)+'</td><td>'+fmt(r.v0_mm_s,2)+'</td><td>'+fmt(r.vE_mm_s,2)+'</td><td>'+fmt(r.rc_um,3)+'</td><td>'+fmt(r.q_1e19,3)+'</td></tr>'; }).join(''); }
+
+    // ヒストグラム (変更なし)
+    function ensureHist(){ if(!state.chartHist){ state.chartHist = new Chart($('#chart_hist'), { type:'bar', data:{labels:[], datasets:[{label:'q [C]', data:[]}]}, options:{plugins:{legend:{labels:{color:'#e5e7eb'}}}, scales:{x:{ticks:{color:'#cbd5e1'},grid:{color:'rgba(148,163,184,.12)'}}, y:{title:{display:true,text:'カウント',color:'#9ca3af'},ticks:{color:'#cbd5e1'},grid:{color:'rgba(148,163,184,.12)'}}}}}); } }
+    function updateHistogram(){ ensureHist(); var arr = state.records.map(function(r){return r.q}); if(arr.length===0){ state.chartHist.data.labels=[]; state.chartHist.data.datasets[0].data=[]; state.chartHist.update(); return; } var min=Math.min.apply(null,arr), max=Math.max.apply(null,arr); var bins=Math.max(1, state.bins|0); var step=(max-min)||1e-21; var width= step/bins || (Math.abs(min)||1e-21)/bins; var edges=Array.from({length:bins+1}, function(_,i){return min + i*width}); var counts=new Array(bins).fill(0); for(var ii=0; ii<arr.length; ii++){ var x=arr[ii]; var k=Math.floor((x-min)/width); if(k<0) k=0; if(k>=bins) k=bins-1; counts[k]++; } 
+      var labels=[]; 
+      for(var j=0;j<bins;j++){ 
+        var e=edges[j]; 
+        labels.push(fmtSci(e, 2)); 
+      } 
+      state.chartHist.data.labels=labels; 
+      state.chartHist.data.datasets[0].data=counts; 
+      state.chartHist.update(); 
+    }
+
+    // CSV (変更なし)
+    function buildCSV(rows, opts){ opts = opts||{}; var newline = (opts.newline==null)? '\r\n' : opts.newline; var bom = (opts.bom==null)? true : opts.bom; var header=bom?'\uFEFF':''; var body=rows.map(function(arr){ return arr.map(function(v){ var s=String(v==null? '': v); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }).join(',') }).join(newline); return header+body; }
+    function toCSV(){ var rows=[["#","v1_mm_s","v2_mm_s","rc_um","q_C","q_1e-19"]].concat(state.records.map(function(r,i){return [i+1,r.v0_mm_s,r.vE_mm_s,r.rc_um,r.q,r.q_1e19]})); var csv=buildCSV(rows,{newline:'\r\n', bom:true}); var blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='millikan_data.csv'; a.click(); URL.revokeObjectURL(a.href); }
+
+    // ====== UI wiring (変更なし) ======
+    $('#btn_toggleE').addEventListener('click', function(){ state.Eon=!state.Eon; drawFieldArrows(); });
+    $('#btn_pause').addEventListener('click', function(){ state.paused = !state.paused; $('#btn_pause').textContent = state.paused? '▶ 再開' : '⏯ 一時停止'; });
+    $('#btn_new').addEventListener('click', uiNewDroplet);
+    $('#btn_v0').addEventListener('click', measure_v0);
+    $('#btn_vE').addEventListener('click', measure_vE);
+    $('#btn_record').addEventListener('click', recordCurrent);
+    $('#btn_reset').addEventListener('click', function(){ state.records=[]; state.drop=null; state.meas={v0_mm_s:null,vE_mm_s:null}; renderTable(); updateHistogram(); $('#out_N').textContent='0'; $('#drop').style.display='none'; });
+    
+    $('#btn_autogen').addEventListener('click', function(){ 
+      var N=Math.max(3, Math.min(60, parseInt($('#in_N').value||12))); 
+      for(var i=0;i<N;i++){ 
+        state.pol = -1; 
+        state.drop=newDroplet(); 
+        state.Eon=false; 
+        for(var t=0;t<300;t++){ stepDynamics(0.02); } 
+        var v0= currentSpeedMmPerS(); 
+        state.Eon=true; 
+        setV((Math.random()*2-1)*500); 
+        drawFieldArrows(); 
+        for(var t2=0;t2<300;t2++){ stepDynamics(0.02); } 
+        var vE=currentSpeedMmPerS(); 
+        var rc=estimate_rc_from_v0(Math.abs(v0)/1000); 
+        var q=compute_q_from_measurements(v0, vE, rc); 
+        state.records.push({ v0_mm_s:v0, vE_mm_s:vE, rc_um:rc*1e6, q_1e19:q/1e-19, q:q, rc:rc }); 
+      } 
+      renderTable(); updateHistogram(); $('#out_N').textContent = state.records.length; toast('サンプルを追加しました'); 
+    });
+
+    $('#btn_csv').addEventListener('click', toCSV);
+    $('#in_corr').addEventListener('change', function(e){ state.corrOn = (e.target.value==='on'); });
+    $('#btn_balance_demo').addEventListener('click', balance_now_demo);
+    
+    $('#slider_V').addEventListener('input', function(){ refreshFromUI(); drawFieldArrows(); });
+    $('#in_bins').addEventListener('input', function(){ refreshFromUI(); updateHistogram(); });
+
+    // ====== Minimal self-tests (変更なし) ======
+    (function selfTests(){
+      try{
+        var s=buildCSV([[1,'a'],[2,'b,c']],{newline:'\n', bom:false}); console.assert(/a\n2,\"b\,c\"/.test(s), 'CSV quotes & LF');
+        s=buildCSV([[1,'日本語'],[2,'改行\n入り']],{newline:'\r\n', bom:true}); console.assert(s.startsWith('\uFEFF'),'BOM'); console.assert(/\r\n/.test(s),'CRLF');
+        
+        var keep = JSON.parse(JSON.stringify(state));
+        state.drop = newDroplet(); 
+        console.assert(state.drop.q_true < 0, 'Drop charge is negative');
+        console.assert(state.drop.r_um <= 0.8, 'Drop radius is within new limit'); 
+        
+        state.Eon=false; for(var i=0;i<200;i++){ stepDynamics(1/240); }
+        var v0b = Math.abs(currentSpeedMmPerS()); console.assert(v0b>0, 'terminal speed finite'); console.assert(v0b<200, 'terminal speed reasonable');
+        setDropAppearance(); placeDrop(); var el=document.getElementById('drop'); console.assert(!!el.style.transform && el.style.transform.length>0, 'drop transform set');
+        updateVectors(); var vg = getComputedStyle(document.getElementById('vec_g')); var labg = getComputedStyle(document.getElementById('lab_g')); var W = document.getElementById('chamber').clientWidth; var leftVG = parseFloat(vg.left); var leftLab = parseFloat(labg.left); console.assert(leftVG>=0 && leftVG<=W, 'vec within chamber'); console.assert(leftLab>=0 && leftLab<=W, 'label within chamber');
+        state.drop=null; Object.assign(state, keep);
+      }catch(e){ console.error('Self-tests failed:', e); toast('⚠ 内部テストが失敗しました（console参照）', true);} })();
+
+    // boot
+    measureGeometry(); refreshFromUI(); updateHistogram(); uiNewDroplet();
+    if (document.readyState==='complete' || document.readyState==='interactive'){
+      requestAnimationFrame(tick);
+    } else {
+      window.addEventListener('load', function(){ requestAnimationFrame(tick); });
+    }
+  </script>
+</body>
+</html>
